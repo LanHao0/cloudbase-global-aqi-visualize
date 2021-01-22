@@ -70,15 +70,12 @@
         </div>
     </div>
     <br>
-    <div class="row" id="search_result" style="display: none">
-        <br>
-        <div class="col">
-            <div class="text-center">
-                <div class="spinner-grow text-primary" role="status">
-                    <span class="sr-only">Loading...</span>
-                </div>
-            </div>
+    <div class="text-center" style="display: none" id="searchLoading">
+        <div class="spinner-grow text-primary" role="status">
+            <span class="sr-only">Loading...</span>
         </div>
+    </div>
+    <div class="row" id="search_result" style="display: none">
     </div>
 </div>
 <br>
@@ -473,11 +470,11 @@
 
         //https://stackoverflow.com/questions/18382945/how-do-i-get-the-latlng-after-the-dragend-event-in-leaflet
         map.on('dragend', function () {
-            console.log("map,dragend");
+            // console.log("map,dragend");
             map_add_marker(map, true);
         });
         map.on('zoomend', function () {
-            console.log('mag,zooming');
+            // console.log('map,zooming');
             map_add_marker(map, true);
         });
         //https://gis.stackexchange.com/questions/244457/leaflet-label-plugin-not-working
@@ -563,7 +560,7 @@
                 temp_row.setAttribute("style", "background-color: mediumvioletred;color:white;");
             } else if (temp_wrong >= 300) {
                 temp_row.setAttribute("style", "background-color: darkred;color:white;");
-            }else {
+            } else {
                 temp_row.setAttribute("class", "bg-light");
             }
 
@@ -581,7 +578,9 @@
 
     function search() {
         var search_city = document.getElementById("search_input_bar").value;
-        console.log(search_city);
+        // console.log(search_city);
+        document.getElementById('searchLoading').style.display = '';
+        document.getElementById('search_result').style.display='none';
         if (search_city == "") {
             window.alert("输入内容为空！请重新输入！");
         } else {
@@ -591,23 +590,24 @@
 
                     console.log(json_search.data.length);
                     document.getElementById("search_result").removeAttribute("style");
-                    if (json_search.data.length>0){
+                    if (json_search.data.length > 0) {
 
-                    var search_result_table = '<table class="table" id="search_table"><tr class="bg-white"><th>监测站/更新时间</th><th>AQI</th></tr>';
-                    for (var i = 0; i < json_search.data.length; i++) {
-                        if (json_search.data[i].aqi == "") {
-                            continue;
+                        var search_result_table = '<table class="table" id="search_table"><tr class="bg-white"><th>监测站/更新时间</th><th>AQI</th></tr>';
+                        for (var i = 0; i < json_search.data.length; i++) {
+                            if (json_search.data[i].aqi == "") {
+                                continue;
+                            }
+
+                            search_result_table = search_result_table + "<tr><td>" + json_search.data[i].station.name + "<br>" + json_search.data[i].time.stime + "</td><td>" + json_search.data[i].aqi + "</td></tr>";
                         }
+                        document.getElementById("search_result").innerHTML = search_result_table + "</table>";
 
-                        search_result_table = search_result_table + "<tr><td>" + json_search.data[i].station.name + "<br>" + json_search.data[i].time.stime + "</td><td>" + json_search.data[i].aqi + "</td></tr>";
-                    }
-                    document.getElementById("search_result").innerHTML = search_result_table + "</table>";
-
-                    tablecoloring("search_table", 1, 0);
-                    }else{
+                        tablecoloring("search_table", 1, 0);
+                    } else {
                         document.getElementById("search_result").innerHTML = "<h3 style='margin:0 auto;'>无搜索结果</h3>";
 
                     }
+                    document.getElementById('searchLoading').style.display = 'none';
                 })
 
 

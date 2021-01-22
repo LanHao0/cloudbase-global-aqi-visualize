@@ -36,7 +36,7 @@ router.get("/FOG_getBySearch",async function (req,res,next) {
     let date = new Date().getTime();
     await axios
         .get('https://api.waqi.info/search/?token=085f8517137bddf244a523b16384f7d7e94c802a&time='
-            + date + '&keyword=' + query.keyword)
+            + date + '&keyword=' + encodeURI(query.keyword))
         .then(response => {
             res.json(response.data);
         })

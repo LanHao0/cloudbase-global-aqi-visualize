@@ -164,24 +164,24 @@
     <div class="col">
         <div class="card bg-dark">
             <h3>空气最佳前10排名</h3>
-            <div id="best_10_city">
-                <div class="d-flex justify-content-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="sr-only">Loading...</span>
-                    </div>
+            <div id="best10Loading" style="display: none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
                 </div>
+            </div>
+            <div id="best_10_city">
             </div>
         </div>
     </div>
     <div class="col">
         <div class="card bg-dark">
             <h3>空气最差前10排名</h3>
-            <div id="worst_10_city">
-                <div class="d-flex justify-content-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="sr-only">Loading...</span>
-                    </div>
+            <div id="worst10Loading" style="display: none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
                 </div>
+            </div>
+            <div id="worst_10_city">
             </div>
         </div>
     </div>
@@ -196,13 +196,14 @@
             <h5 class="card-title">空气质量及污染测量标准</h5>
             <h6 class="card-subtitle mb-2 text-muted">表格数据来自：<a
                     href="https://aqicn.org/scale/">https://aqicn.org/scale/</a></h6>
-            <table class="table table-responsive">
-                <tr class="bg-light">
-                    <th style="width: 5%">AQI</th>
-                    <th style="width: 5%">空气等级</th>
-                    <th style="width: 45%">健康影响</th>
-                    <th style="width: 45%">建议</th>
-                </tr>
+            <table class="table">
+                <thead class="bg-light">
+                <th style="width: 7%">AQI</th>
+                <th style="width: 7%">空气等级</th>
+                <th style="width: 25%">健康影响</th>
+                <th style="width: 45%">建议</th>
+                </thead>
+                <tbody>
 
                 <tr class="table table-success">
                     <td>0-50</td>
@@ -240,7 +241,7 @@
                     <td>紧急警报，每个人可能受到更严重的健康影响</td>
                     <td>每个人都应该避免户外锻炼</td>
                 </tr>
-
+                </tbody>
             </table>
         </div>
     </div>
@@ -261,8 +262,8 @@
                 option.innerText = city.country;
                 selection.appendChild(option);
             }
-            countryLoading.style.display='none';
-            selection.style.display='';
+            countryLoading.style.display = 'none';
+            selection.style.display = '';
 
         })
 
@@ -275,6 +276,10 @@
 
 
     function get_json(country) {
+        document.getElementById('worst10Loading').style.display = '';
+        document.getElementById('best10Loading').style.display = '';
+        document.getElementById('best_10_city').style.display = 'none';
+        document.getElementById('worst_10_city').style.display = 'none';
 
         array_citys = [];
         axios.get('./api/FOG_getCountryJSON/' + country)
@@ -325,7 +330,10 @@
                     }
                 }
                 document.getElementById("worst_10_city").innerHTML = str + "</table>";
-
+                document.getElementById('worst10Loading').style.display = 'none';
+                document.getElementById('best10Loading').style.display = 'none';
+                document.getElementById('best_10_city').style.display = '';
+                document.getElementById('worst_10_city').style.display = '';
                 tablecoloring("table_best", 1, 0);
                 tablecoloring("table_worst", 1, 1);
             })
@@ -555,6 +563,8 @@
                 temp_row.setAttribute("style", "background-color: mediumvioletred;color:white;");
             } else if (temp_wrong >= 300) {
                 temp_row.setAttribute("style", "background-color: darkred;color:white;");
+            }else {
+                temp_row.setAttribute("class", "bg-light");
             }
 
             na_1++;
@@ -581,7 +591,9 @@
 
                     console.log(json_search.data.length);
                     document.getElementById("search_result").removeAttribute("style");
-                    var search_result_table = '<table class="table" id="search_table"><th>监测站/更新时间</th><th>AQI</th>';
+                    if (json_search.data.length>0){
+
+                    var search_result_table = '<table class="table" id="search_table"><tr class="bg-white"><th>监测站/更新时间</th><th>AQI</th></tr>';
                     for (var i = 0; i < json_search.data.length; i++) {
                         if (json_search.data[i].aqi == "") {
                             continue;
@@ -592,6 +604,10 @@
                     document.getElementById("search_result").innerHTML = search_result_table + "</table>";
 
                     tablecoloring("search_table", 1, 0);
+                    }else{
+                        document.getElementById("search_result").innerHTML = "<h3 style='margin:0 auto;'>无搜索结果</h3>";
+
+                    }
                 })
 
 

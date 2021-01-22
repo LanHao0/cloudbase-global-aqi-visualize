@@ -1,7 +1,6 @@
 
 # 全球空气质量检测可视化
-![全球AQI质量监测可视化.jpg](https://global-api-visualize-9bz08f11364-1251935409.ap-shanghai.app.tcloudbase.com/img/project.jpg)
-
+![全球AQI质量监测可视化.jpg](https://i.loli.net/2021/01/22/wKp7PdFXjREivf1.jpg)
 此项目基于云开发 + [Express](https://expressjs.com/zh-cn/) 展示全球空气质量检测页面
 
 ## 线上演示 & 一键部署！

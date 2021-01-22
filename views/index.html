@@ -1,0 +1,600 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>全球AQI质量监测可视化</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta charset="utf-8"/>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.4.0/dist/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            background-color: black;
+            color: #eee;
+            padding: 20px;
+        }
+
+        .card {
+            padding: 20px;
+        }
+
+        .form-control, .form-control:focus {
+            background-color: black;
+            border: solid 1px #eee;
+            color: #eee;
+        }
+
+    </style>
+</head>
+<body onLoad="hi();">
+<div>
+    <h1>全球AQI质量监测可视化</h1>
+    更新时间：<span id="update_time">
+						<div class="spinner-grow text-primary" role="status">
+							<span class="sr-only">Loading...</span>
+						</div>
+				</span>
+    <br>数据来自：<a href="https://waqi.info">https://waqi.info</a>
+
+</div>
+
+<hr>
+<div class="card bg-dark">
+    <h3>全球空气质量可视化</h3>
+    <div class="row">
+        <div class="col">
+            <div id="whole_map" style="height:320px;">
+                <br><br>
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+<div class="card bg-dark">
+    <h3>直接搜索：</h3>
+    <div class="row">
+
+        <div class="col-8">
+            <input type="text" class="form-control" id="search_input_bar"/>
+        </div>
+        <div class="col-2">
+            <input type="button" class="btn btn-primary" value="搜索" onClick="search();" id="search_button"/>
+        </div>
+    </div>
+    <br>
+    <div class="row" id="search_result" style="display: none">
+        <br>
+        <div class="col">
+            <div class="text-center">
+                <div class="spinner-grow text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+
+<div class="row">
+    <div class="col">
+        <div class="card bg-dark" id="surround_me_card bg-dark">
+            <h3>你周围的空气质量：<span id="yourlocation"></span></h3>
+
+
+            <div style="display: none;" id="surround_me_detail">
+                <span id="update_location_time"></span><br>
+                <span id="aqi_surround_me"></span><br>
+                <span id="ranking_in_China"></span><br>
+                <span id="station"></span><br>
+                <br>
+                <div id="map" style="height:380px;display: none;"></div>
+            </div>
+            <div id="get_location_btn">
+                <h6>（加载需要时间...）</h6>
+                <input type="button" class="btn btn-primary btn-lg btn-block" onClick="get_surround_me();" value="获取"/>
+            </div>
+
+            <div id="loading_acquire" style="display: none;">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-grow text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <br>
+
+
+        </div>
+    </div>
+
+</div>
+<br>
+<div class="row" style="display: none" id="surround_me_more">
+    <div class="col">
+        <div class="card bg-dark">
+
+            <h3>当前位置：<span id="now_location"></span></h3>
+            <hr>
+            <p>一氧化碳CO：<span id="co"></span></p>
+            <p>二氧化氮NO<sub>2</sub>：<span id="no2"></span></p>
+            <p>二氧化硫SO<sub>2</sub>：<span id="so2"></span></p>
+            <p>臭氧O<sub>3</sub>：<span id="o3"></span></p>
+            <p>pm10：<span id="pm10"></span></p>
+            <p>pm2.5：<span id="pm25"></span></p>
+            <p>气压：<span id="pressure"></span></p>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-dark">
+            <h3>数据来源：<a href="https://waqi.info">https://waqi.info</a>开放API</h3>
+            <p>
+                <br><b>Data from: World Air Quality Index Project</b>
+            </p>
+        </div>
+    </div>
+</div>
+<br>
+
+<br>
+<div class="row">
+    <div class="col-md-1 col-4">
+        选择国家：
+    </div>
+    <div class="col-md-4 col-8">
+        <div id="countryLoading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+
+        <select class="form-control" id="countrySelect" onchange="changeCountry()" style="display:none">
+            <option></option>
+        </select>
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <div class="card bg-dark">
+            <h3>空气最佳前10排名</h3>
+            <div id="best_10_city">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card bg-dark">
+            <h3>空气最差前10排名</h3>
+            <div id="worst_10_city">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+<br>
+
+<div class="row">
+    <div class="col">
+        <div class="card bg-dark">
+            <h5 class="card-title">空气质量及污染测量标准</h5>
+            <h6 class="card-subtitle mb-2 text-muted">表格数据来自：<a
+                    href="https://aqicn.org/scale/">https://aqicn.org/scale/</a></h6>
+            <table class="table table-responsive">
+                <tr class="bg-light">
+                    <th style="width: 5%">AQI</th>
+                    <th style="width: 5%">空气等级</th>
+                    <th style="width: 45%">健康影响</th>
+                    <th style="width: 45%">建议</th>
+                </tr>
+
+                <tr class="table table-success">
+                    <td>0-50</td>
+                    <td>好</td>
+                    <td>空气质量好，有一点或完全没有污染</td>
+                    <td>无</td>
+                </tr>
+                <tr class="table table-warning">
+                    <td>51-100</td>
+                    <td>中等</td>
+                    <td>空气质量是可以接受的，但某些污染物可能对极少数异常敏感人群健康有较弱影响</td>
+                    <td>儿童、老年人及心脏病、呼吸系统疾病（哮喘）患者应限制长时间、高强度的户外锻炼</td>
+                </tr>
+                <tr style="background-color: orange">
+                    <td>101-150</td>
+                    <td>对敏感人群是不健康的</td>
+                    <td>敏感人群可能产生不适，普通大众不太可能有影响</td>
+                    <td>儿童、老年人及心脏病、呼吸系统疾病（哮喘）患者应限制长时间、高强度的户外锻炼</td>
+                </tr>
+                <tr style="background-color: indianred;color:white;">
+                    <td>151-200</td>
+                    <td>不健康的</td>
+                    <td>对每个人产生影响，敏感人群可能会有更严重的不适感</td>
+                    <td>儿童、老年人及心脏病、呼吸系统疾病（哮喘）患者应避免长时间、高强度的户外锻炼。人群里特别是儿童应该限制户外锻炼时间</td>
+                </tr>
+                <tr style="background-color: mediumvioletred;color:white;">
+                    <td>201-300</td>
+                    <td>非常不健康的</td>
+                    <td>紧急警告，整个人群更容易被影响</td>
+                    <td>儿童、老年人及心脏病、呼吸系统疾病（哮喘）患者避免所有的长时间、高强度的户外锻炼。人群里特别是儿童应该限制户外锻炼时间</td>
+                </tr>
+                <tr style="background-color: darkred;color:white;">
+                    <td>300+</td>
+                    <td>危险Hazardous</td>
+                    <td>紧急警报，每个人可能受到更严重的健康影响</td>
+                    <td>每个人都应该避免户外锻炼</td>
+                </tr>
+
+            </table>
+        </div>
+    </div>
+
+</div>
+<script>
+    var array_citys = [];
+
+    let selection = document.getElementById('countrySelect');
+    let countryLoading = document.getElementById('countryLoading');
+    axios.get('./api/allCountry')
+        .then(res => {
+            const data = res.data;
+
+            for (let city of data.cities) {
+                let option = document.createElement('option');
+                option.value = city.country;
+                option.innerText = city.country;
+                selection.appendChild(option);
+            }
+            countryLoading.style.display='none';
+            selection.style.display='';
+
+        })
+
+
+    //https://stackoverflow.com/questions/2499567/how-to-make-a-json-call-to-a-url/2499647#2499647
+
+    function changeCountry() {
+        get_json(selection.value);
+    }
+
+
+    function get_json(country) {
+
+        array_citys = [];
+        axios.get('./api/FOG_getCountryJSON/' + country)
+            .then(res => {
+                var json_obj = res.data;
+                var raw_json = res.data;
+
+                var DAY = raw_json.time.split("T");
+                var CLOCK = DAY[1].split("+");
+                var tep_hour = DAY[1].split(".")[0];
+                var hour = tep_hour.split(":")[0] - 1;
+
+                document.getElementById("update_time").innerHTML = DAY[0] + " " + hour + ":" + tep_hour.split(":")[1] + ":" + tep_hour.split(":")[2] + " GMT+8:00";
+
+
+                for (let i in json_obj.cities) {
+                    array_citys[i] = [];
+                    array_citys[i][0] = raw_json.cities[i].city;
+                    array_citys[i][1] = parseInt(raw_json.cities[i].station.a);
+                    array_citys[i][2] = raw_json.cities[i].station.n;
+                    array_citys[i][3] = raw_json.cities[i].station.u;
+                    array_citys[i][4] = raw_json.cities[i].station.g[0];
+                    array_citys[i][5] = raw_json.cities[i].station.g[1];
+                }
+
+                var str = '<table class="table" id="table_best"><tr class="bg-light"><th>地点/监测点</th><th>AQI</th></tr>';
+
+                let count = 0;
+                for (let i = array_citys.length; i > 0; i--) {
+                    if (count < array_citys.length && count < 10) {
+                        str = str + "<tr><td>" + array_citys[i - 1][0] + "<br><h6>" + array_citys[i - 1][2] + "</h6></td><td>" + array_citys[i - 1][1] + "</td></tr>";
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+                document.getElementById("best_10_city").innerHTML = str + "</table>";
+
+
+                var str = '<table class="table" id="table_worst"><tr class="bg-light"><th>地点/监测点</th><th>AQI</th></tr>';
+                let count2 = 0;
+                for (let i = 0; i < 10; i++) {
+                    if (count2 < array_citys.length && count2 < 10) {
+                        str = str + "<tr><td>" + array_citys[i][0] + "<br><h6>" + array_citys[i][2] + "</h6></td><td>" + array_citys[i][1] + "</td></tr>";
+                        count2++;
+                    } else {
+                        break;
+                    }
+                }
+                document.getElementById("worst_10_city").innerHTML = str + "</table>";
+
+                tablecoloring("table_best", 1, 0);
+                tablecoloring("table_worst", 1, 1);
+            })
+    }
+
+</script>
+<script>
+
+    function get_surround_me() {
+
+        document.getElementById("get_location_btn").setAttribute("style", "display:none");
+        document.getElementById("loading_acquire").removeAttribute("style");
+        if (navigator.geolocation) {
+            document.getElementById("map").setAttribute("style", "height:380px;border-radius:40px;box-shadow:0px 0px 8px #000;");
+            navigator.geolocation.getCurrentPosition(showPosition);
+        } else {
+            document.getElementById("map").innerHTML = "您没有允许定位";
+        }
+    }
+
+    //https://www.w3resource.com/javascript/form/all-letters-field
+    function allLetter(inputtxt) {
+        var letters = /^[A-Za-z]+$/;
+        if (inputtxt.match(letters)) {
+            return true;
+        } else {
+
+            return false;
+        }
+    }
+
+    function capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    function getRndInteger(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    //https://www.w3schools.com/js/js_random.asp
+    var latitude;
+    var longitude;
+
+    function showPosition(position) {
+        document.getElementById("surround_me_detail").removeAttribute("style");
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+//						var json_obj = JSON.parse(Get('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat='+latitude+'&lon='+longitude+'&time='+getRndInteger(1000, 800000)));
+
+
+        axios.get('./api/FOG_getByGeo?latitude=' + latitude + '&longitude=' + longitude)
+            .then(res => {
+                var detail_json = res.data;
+
+                document.getElementById("surround_me_more").removeAttribute("style");
+                document.getElementById("co").innerHTML = detail_json.data.iaqi.co.v;
+                document.getElementById("no2").innerHTML = detail_json.data.iaqi.no2.v;
+                document.getElementById("so2").innerHTML = detail_json.data.iaqi.so2.v;
+                document.getElementById("o3").innerHTML = detail_json.data.iaqi.o3.v;
+                document.getElementById("pressure").innerHTML = detail_json.data.iaqi.p.v;
+                document.getElementById("pm10").innerHTML = detail_json.data.iaqi.pm10.v;
+                document.getElementById("pm25").innerHTML = detail_json.data.iaqi.pm25.v;
+
+                console.log(detail_json.data.city.url);
+                var my_city = detail_json.data.city.url;
+                my_city = my_city.split("/")[4];
+                console.log(my_city);
+                /*						var my_city_another;
+                                        if(allLetter(my_city)){
+                                            my_city_another=my_city;
+                                        }else{
+                                            my_city_another=my_city.substring(0,my_city.length-1);
+                                        }
+
+                                        console.log(my_city_another);*/
+
+
+                var my_city_another = capitalizeFirstLetter(my_city);
+                document.getElementById("yourlocation").innerHTML = my_city_another;
+                document.getElementById("now_location").innerHTML = my_city_another;
+                for (var i = 0; i < array_citys.length; i++) {
+                    if (array_citys[i][2].includes(my_city)) {
+                        coloring_card(array_citys[i][1], i);
+                        break;
+                    }
+
+                    if (array_citys[i][2].includes(my_city_another)) {
+
+                        coloring_card(array_citys[i][1], i);
+                        break;
+                    }
+
+                }
+
+
+                var your_map = document.getElementById('map');
+                set_map(latitude, longitude, your_map, 11);
+                document.getElementById("loading_acquire").setAttribute("style", "display:none");
+            })
+
+
+    }
+
+    function coloring_card(aqi_num, i) {
+        console.log("当地空气指数：" + array_citys[i][1]);
+        console.log("排名" + (i + 1));
+        document.getElementById("aqi_surround_me").innerHTML = "AQI：" + array_citys[i][1];
+        document.getElementById("ranking_in_China").innerHTML = "当前空气质量排名：" + (array_citys.length - i);
+        document.getElementById("station").innerHTML = "监测站：" + array_citys[i][2];
+        document.getElementById("update_location_time").innerHTML = "更新时间：" + array_citys[i][3];
+        var temp_row = document.getElementById("surround_me_card bg-dark");
+        if (aqi_num < 51) {
+            temp_row.setAttribute("style", "background-color: green;color:white");
+            //wrong_acc_num++;
+        } else if (aqi_num < 101 && aqi_num >= 51) {
+            temp_row.setAttribute("style", "background-color: yellow");
+        } else if (aqi_num < 151 && aqi_num >= 100) {
+            temp_row.setAttribute("style", "background-color: orange");
+        } else if (aqi_num < 201 && aqi_num >= 151) {
+            temp_row.setAttribute("style", "background-color: indianred;color:white;");
+        } else if (aqi_num < 300 && aqi_num >= 201) {
+            temp_row.setAttribute("style", "background-color: mediumvioletred;color:white;");
+        } else if (aqi_num >= 300) {
+            temp_row.setAttribute("style", "background-color: darkred;color:white;");
+        }
+    }
+
+    function set_map(latitude, longitude, map, zoom_level) {
+        var OSM_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+        var OSM_ATTRIB = '&copy;  <a  href="https://openstreetmap.org/copyright">OpenStreetMap</a>  contributors';
+        var osmLayer = L.tileLayer(OSM_URL, {attribution: OSM_ATTRIB});
+
+        var map = L.map(map).setView([latitude, longitude], zoom_level);
+        map.addLayer(osmLayer);
+
+        map_add_marker(map, false);
+
+        //https://stackoverflow.com/questions/18382945/how-do-i-get-the-latlng-after-the-dragend-event-in-leaflet
+        map.on('dragend', function () {
+            console.log("map,dragend");
+            map_add_marker(map, true);
+        });
+        map.on('zoomend', function () {
+            console.log('mag,zooming');
+            map_add_marker(map, true);
+        });
+        //https://gis.stackexchange.com/questions/244457/leaflet-label-plugin-not-working
+        //https://blog.csdn.net/weixin_34152820/article/details/93758593
+
+    }
+
+    var markers_in_range;
+
+    function map_add_marker(map, delete_or_not) {
+        if (delete_or_not) {
+            map.removeLayer(markers_in_range);
+        }
+        var upright = map.getBounds().getNorthEast().lat + "," + map.getBounds().getNorthEast().lng;
+        var leftdown = map.getBounds().getSouthWest().lat + "," + map.getBounds().getSouthWest().lng;
+
+        axios.get("./api/FOG_getByBounds?leftDown=" + leftdown + "&upRight=" + upright)
+            .then(res => {
+                var map_json = res.data;
+
+                var marker_layer_arr = [];
+                for (var i = 0; i < map_json.length; i++) {
+                    var lat = map_json[i].lat;
+                    var lon = map_json[i].lon;
+                    //console.log(lat+","+lon);
+                    var aqi = map_json[i].aqi;
+                    var station = map_json[i].city;
+                    var update_time = map_json[i].utime;
+
+                    var aqicolor;
+
+                    if (aqi < 51) {
+                        aqicolor = "#8fd19e";
+                        //green
+                    } else if (aqi < 101 && aqi >= 51) {
+                        aqicolor = "#ffdf7e";
+                        //yellow
+                    } else if (aqi < 151 && aqi >= 100) {
+                        aqicolor = "#ffa500";
+                    } else if (aqi < 201 && aqi >= 151) {
+                        aqicolor = "#cd5c5c";
+                    } else if (aqi < 300 && aqi >= 201) {
+                        aqicolor = "#c71585";
+                    } else if (aqi >= 300) {
+                        aqicolor = "#8b0000";
+                    }
+                    //tracking lanhaoo.club, this js code was written by LanLanXiang
+                    var temp_marker = L.circle([lat, lon], {
+                        color: aqicolor,
+                        fillColor: aqicolor,
+                        fillOpacity: 0.5,
+                        radius: 100 * map.getZoom()
+                    }).bindPopup(station + "<br>空气质量：" + aqi + "<br>更新时间：" + update_time)
+                        .openPopup();
+                    marker_layer_arr.push(temp_marker);
+                }
+                markers_in_range = L.layerGroup(marker_layer_arr);
+                map.addLayer(markers_in_range);
+            })
+
+    }
+
+    function tablecoloring(table, num_index, num_table) {
+        //and counting 附带各种为表格的计数
+        var table_tr_length = document.getElementById(table).getElementsByTagName("tr").length;
+        var na_1 = 1;
+        var rowss_1 = document.getElementsByTagName("table")[num_table].rows;
+        while (na_1 < table_tr_length) {
+            var now1 = rowss_1[na_1];
+
+            var temp_wrong = now1.cells[num_index].firstChild.nodeValue;
+            var temp_row = rowss_1[na_1];
+            if (temp_wrong < 51) {
+                temp_row.setAttribute("class", "table table-success");
+                //wrong_acc_num++;
+            } else if (temp_wrong < 101 && temp_wrong >= 51) {
+                temp_row.setAttribute("class", "table table-warning");
+            } else if (temp_wrong < 151 && temp_wrong >= 100) {
+                temp_row.setAttribute("style", "background-color: orange");
+            } else if (temp_wrong < 201 && temp_wrong >= 151) {
+                temp_row.setAttribute("style", "background-color: indianred;color:white;");
+            } else if (temp_wrong < 300 && temp_wrong >= 201) {
+                temp_row.setAttribute("style", "background-color: mediumvioletred;color:white;");
+            } else if (temp_wrong >= 300) {
+                temp_row.setAttribute("style", "background-color: darkred;color:white;");
+            }
+
+            na_1++;
+        }
+
+
+    }
+
+    function hi() {
+        get_json('CN');
+
+        set_map(34, -5, document.getElementById('whole_map'), 1);
+    }
+
+    function search() {
+        var search_city = document.getElementById("search_input_bar").value;
+        console.log(search_city);
+        if (search_city == "") {
+            window.alert("输入内容为空！请重新输入！");
+        } else {
+            axios.get("./api/FOG_getBySearch?keyword=" + search_city)
+                .then(res => {
+                    var json_search = res.data;
+
+                    console.log(json_search.data.length);
+                    document.getElementById("search_result").removeAttribute("style");
+                    var search_result_table = '<table class="table" id="search_table"><th>监测站/更新时间</th><th>AQI</th>';
+                    for (var i = 0; i < json_search.data.length; i++) {
+                        if (json_search.data[i].aqi == "") {
+                            continue;
+                        }
+
+                        search_result_table = search_result_table + "<tr><td>" + json_search.data[i].station.name + "<br>" + json_search.data[i].time.stime + "</td><td>" + json_search.data[i].aqi + "</td></tr>";
+                    }
+                    document.getElementById("search_result").innerHTML = search_result_table + "</table>";
+
+                    tablecoloring("search_table", 1, 0);
+                })
+
+
+        }
+    }
+</script>

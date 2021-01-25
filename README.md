@@ -1,5 +1,5 @@
 
-# 全球空气质量检测可视化
+# 全球空气质量监测可视化
 ![全球AQI质量监测可视化.jpg](https://i.loli.net/2021/01/22/wKp7PdFXjREivf1.jpg)
 此项目基于云开发 + [Express](https://expressjs.com/zh-cn/) 展示全球空气质量检测页面
 

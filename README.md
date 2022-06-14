@@ -4,7 +4,10 @@
 此项目基于云开发 + [Express](https://expressjs.com/zh-cn/) 展示全球空气质量检测页面
 
 ## 线上演示 & 一键部署！
-线上演示：[https://global-api-visualize-9bz08f11364-1251935409.ap-shanghai.app.tcloudbase.com/](https://global-api-visualize-9bz08f11364-1251935409.ap-shanghai.app.tcloudbase.com/)
+线上演示：
+https://lanhaoo.club/lab/aqi.html
+
+<s>[https://global-api-visualize-9bz08f11364-1251935409.ap-shanghai.app.tcloudbase.com/](https://global-api-visualize-9bz08f11364-1251935409.ap-shanghai.app.tcloudbase.com/)</s>
 
 点击下方按钮使用 [CloudBase Framework](https://github.com/TencentCloudBase/cloudbase-framework) 可以在云端一键部署本项目到自己的云开发账号上。
 
